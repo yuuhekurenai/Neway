@@ -1,0 +1,102 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Adicione a referência ao Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+    <h1>Lista de Produtos</h1>
+
+    <div class="container mt-3">
+        <div class="row">
+            <div class="col">
+                <a href="{% url 'carrinho-de-compras' %}" class="btn btn-primary">Ver Carrinho</a>
+            </div>
+            <div class="col text-right">
+                <span id="cart-count">0</span> itens no carrinho
+            </div>
+        </div>
+    </div>
+    <br>
+    <!-- Adicione um campo de pesquisa com ID e estilos do Bootstrap -->
+    <div class="form-group">
+        <input type="text" id="search-input" class="form-control" placeholder="Pesquisar por nome do produto">
+    </div>
+
+    <div class="row">
+        {% for product in products %}
+            <div class="col-md-4 product-item">
+                <div class="card mb-4">
+                    <img src="{% static 'placeholder-img.png' %}" class="card-img-top" alt="{{ product.name }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text">Preço: R$ {{ product.price }}</p>
+
+                        <!-- Adiciona um campo de quantidade com um rótulo -->
+                        <form action="{% url 'add-to-cart' product.id %}" method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="quantity">Quantidade:</label>
+                                <input type="number" name="quantity" id="quantity" class="form-control" value="" min="1" required>
+                                <!-- Adiciona a mensagem de erro ou dica em uma span -->
+                            </div>
+                            <button type="submit" class="btn btn-primary">Adicionar ao Carrinho</button>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Adicione a referência ao Bootstrap JS e jQuery (necessários para alguns recursos do Bootstrap) -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- JavaScript personalizado -->
+<script>
+    // Esta função atualiza a contagem do carrinho
+    function updateCartCount() {
+        // Recupere os dados do carrinho da sessão
+        const cart = JSON.parse('{{ request.session.cart|escapejs }}') || {};
+        let totalCount = 0;
+
+        for (const item_id in cart) {
+            totalCount += cart[item_id].quantity;
+        }
+
+        document.getElementById('cart-count').textContent = totalCount;
+    }
+
+    // Atualize a contagem do carrinho quando a página for carregada
+    updateCartCount();
+
+    // Quando um item é adicionado ao carrinho, atualize a contagem
+    $(document).on('cartUpdated', function() {
+        updateCartCount();
+    });
+
+    const searchInput = document.getElementById('search-input');
+
+    // Adicione um evento de digitação para o campo de pesquisa
+    searchInput.addEventListener('input', function() {
+        const query = searchInput.value.toLowerCase();
+        const products = document.querySelectorAll('.product-item');
+
+        // Itere sobre os produtos e mostre/oculte com base na pesquisa
+        products.forEach(function(product) {
+            const productName = product.querySelector('h5').textContent.toLowerCase();
+            if (productName.includes(query)) {
+                product.style.display = 'block';
+            } else {
+                product.style.display = 'none';
+            }
+        });
+    });
+</script>
+</body>
+</html>
